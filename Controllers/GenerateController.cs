@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using AmazonReviewAutoGenerator.Models;
+using AmazonReviewAutoGenerator.Business;
 
 namespace AmazonReviewAutoGenerator.Controllers
 {
@@ -11,17 +13,25 @@ namespace AmazonReviewAutoGenerator.Controllers
     [Route("api/[controller]")]
     public class GenerateController : ControllerBase
     {
-        private readonly ILogger<GenerateController> _logger;
-
-        public GenerateController(ILogger<GenerateController> logger)
-        {
-            _logger = logger;
-        }
-
         [HttpGet]
-        public Review Get()
+        public ActionResult<ReviewToSend> Get()
         {
-            return new Review();
+            ActionResult response;
+
+            try
+            {
+                ReviewToSend result = new ReviewToSend();
+                result.ReviewText = ReviewService.Instance.GenerateReview();
+                result.Rating = ReviewService.Instance.GenerateRating();
+                
+                response = Ok(result);
+            }
+            catch (Exception ex)
+            {
+                response = StatusCode(500, ex.Message);
+            }
+
+            return response;
         }
     }
 }

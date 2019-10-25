@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using AmazonReviewAutoGenerator.Business;
 
 namespace AmazonReviewAutoGenerator
 {
@@ -18,6 +19,16 @@ namespace AmazonReviewAutoGenerator
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            Constants.Configuration = configuration;
+
+            try
+            {
+                ReviewService.Instance.IngestAndTrainData(Constants.Configuration.GetSection("AppSettings:TrainingDataDirectory").Value);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         public IConfiguration Configuration { get; }
