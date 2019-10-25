@@ -2,9 +2,10 @@ using System.IO;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.Text;
+
 using Newtonsoft.Json;
 using AmazonReviewAutoGenerator.Models;
-using System.Text;
 
 namespace AmazonReviewAutoGenerator.Business
 {
@@ -53,7 +54,7 @@ namespace AmazonReviewAutoGenerator.Business
 
             while (true)
             {
-                var suffix = _dictionary[prefix];
+                List<string> suffix = _dictionary[prefix];
                 if (suffix.Count == 1)
                 {
                     if (suffix[0] == "")
@@ -67,10 +68,12 @@ namespace AmazonReviewAutoGenerator.Business
                     rn = rand.Next(suffix.Count);
                     output.Add(suffix[rn]);
                 }
+
                 if (output.Count >= _outputSize)
                 {
                     return output.Take(_outputSize).Aggregate(Join);
                 }
+                
                 n++;
                 prefix = output.Skip(n).Take(_keySize).Aggregate(Join);
             }
@@ -104,7 +107,7 @@ namespace AmazonReviewAutoGenerator.Business
         {
             if (_keySize < 1) throw new ArgumentException("Key size can't be less than 1");
 
-            var words = data.Split();
+            string[] words = data.Split();
             if (_outputSize < _keySize || words.Length < _outputSize)
             {
                 throw new ArgumentException("Output size is out of range");
@@ -112,7 +115,7 @@ namespace AmazonReviewAutoGenerator.Business
 
             for (int i = 0; i < words.Length - _keySize; i++)
             {
-                var key = words.Skip(i).Take(_keySize).Aggregate(Join);
+                string key = words.Skip(i).Take(_keySize).Aggregate(Join);
                 string value;
                 if (i + _keySize < words.Length)
                 {
