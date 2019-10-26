@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AmazonReviewAutoGenerator.Models;
 using AmazonReviewAutoGenerator.Business;
 
 namespace AmazonReviewAutoGenerator.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class GenerateController : ControllerBase
     {
         [HttpGet]
