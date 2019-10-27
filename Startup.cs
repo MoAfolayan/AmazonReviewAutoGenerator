@@ -23,7 +23,7 @@ namespace AmazonReviewAutoGenerator
 
             try
             {
-                ReviewService.Instance.IngestAndTrainData(Constants.Configuration.GetSection("AppSettings:TrainingDataDirectory").Value);
+                ReviewService.IngestAndTrainData(Constants.Configuration.GetSection("AppSettings:TrainingDataDirectory").Value);
             }
             catch (Exception ex)
             {

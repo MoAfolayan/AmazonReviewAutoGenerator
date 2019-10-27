@@ -9,83 +9,54 @@ using AmazonReviewAutoGenerator.Models;
 
 namespace AmazonReviewAutoGenerator.Business
 {
-    public class ReviewService // Making this a singleton in order to not have to train data over and over again
+    public static class ReviewService
     {
-        private int _keySize;
-        private int _outputSize;
-        private Dictionary<string, List<string>> _dictionary;
-        private static ReviewService instance;
+        private static Dictionary<string, List<string>> _dictionary;
+        private static int maxOutputLength;
         
-        static ReviewService() {} // forces laziness
-
-        private ReviewService()
+        static ReviewService() 
         {
-            _keySize = 1;
-            _outputSize = 30;
             _dictionary = new Dictionary<string, List<string>>();
-        }
+        } 
 
-        public static ReviewService Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new ReviewService();
-                }
-                return instance;
-            }
-        }
-
-        public void IngestAndTrainData(string filePath)
+        public static void IngestAndTrainData(string filePath)
         {
             string data = IngestData(filePath);
-            TrainData(data);
+            CreateDictionaryWithTrainedData(data);
         }
 
-        public string GenerateReview()
+        public static string GenerateReview()
         {
             Random rand = new Random();
             List<string> output = new List<string>();
-            int n = 0;
-            int rn = rand.Next(_dictionary.Count);
-            string prefix = _dictionary.Keys.Skip(rn).Take(1).Single();
-            output.AddRange(prefix.Split());
-
-            while (true)
+            int index = rand.Next(_dictionary.Count);
+            string prefix = _dictionary.Keys.Skip(index).Take(1).Single();
+            output.Add(prefix);
+            int reviewTextLength = Convert.ToInt32(Constants.Configuration.GetSection("AppSettings:ReviewTextLength").Value);
+            
+            if (reviewTextLength > maxOutputLength)
             {
-                List<string> suffix = _dictionary[prefix];
-                if (suffix.Count == 1)
-                {
-                    if (suffix[0] == "")
-                    {
-                        return output.Aggregate(Join);
-                    }
-                    output.Add(suffix[0]);
-                }
-                else
-                {
-                    rn = rand.Next(suffix.Count);
-                    output.Add(suffix[rn]);
-                }
-
-                if (output.Count >= _outputSize)
-                {
-                    return output.Take(_outputSize).Aggregate(Join);
-                }
-                
-                n++;
-                prefix = output.Skip(n).Take(_keySize).Aggregate(Join);
+                throw new Exception("Review text output length too large");
             }
+
+            for (int i = 0; i < reviewTextLength; i++)
+            {
+                index = rand.Next(_dictionary[prefix].Count);
+                var suffix = _dictionary[prefix][index];
+                output.Add(suffix);
+                prefix = suffix;
+            }
+
+            return string.Join(' ', output);
         }
 
-        public string GenerateRating()
+        public static string GenerateRating()
         {
             string rating = new Random().Next(1, 6).ToString();
             return string.Concat(rating, ".0");
         }
 
-        private string IngestData(string filePath)
+        private static string IngestData(string filePath)
         {
             string json = File.ReadAllText(filePath);
             string[] array = json.Split('\n');
@@ -103,43 +74,22 @@ namespace AmazonReviewAutoGenerator.Business
             return allReviewText.ToString();
         }
 
-        private void TrainData(string data)
+        private static void CreateDictionaryWithTrainedData(string data)
         {
-            if (_keySize < 1) throw new ArgumentException("Key size can't be less than 1");
-
             string[] words = data.Split();
-            if (_outputSize < _keySize || words.Length < _outputSize)
-            {
-                throw new ArgumentException("Output size is out of range");
-            }
+            maxOutputLength = words.Length;
 
-            for (int i = 0; i < words.Length - _keySize; i++)
+            for (int i = 0; i < words.Length - 1; i++)
             {
-                string key = words.Skip(i).Take(_keySize).Aggregate(Join);
-                string value;
-                if (i + _keySize < words.Length)
+                if (_dictionary.ContainsKey(words[i]))
                 {
-                    value = words[i + _keySize];
+                    _dictionary[words[i]].Add(words[i + 1]);
                 }
                 else
                 {
-                    value = "";
-                }
-
-                if (_dictionary.ContainsKey(key))
-                {
-                    _dictionary[key].Add(value);
-                }
-                else
-                {
-                    _dictionary.Add(key, new List<string>() { value });
+                    _dictionary.Add(words[i], new List<string>() { words[i + 1] });
                 }
             }
-        }
-
-        private string Join(string a, string b)
-        {
-            return a + " " + b;
         }
     }
 }

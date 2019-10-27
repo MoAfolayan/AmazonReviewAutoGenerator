@@ -20,8 +20,8 @@ namespace AmazonReviewAutoGenerator.Controllers
             try
             {
                 ReviewToSend result = new ReviewToSend();
-                result.ReviewText = ReviewService.Instance.GenerateReview();
-                result.Rating = ReviewService.Instance.GenerateRating();
+                result.ReviewText = ReviewService.GenerateReview();
+                result.Rating = ReviewService.GenerateRating();
                 
                 response = Ok(result);
             }
