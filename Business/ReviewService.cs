@@ -68,7 +68,7 @@ namespace AmazonReviewAutoGenerator.Business
 
             for (int i = 0; i < data.Count; i++)
             {
-                allReviewText.Append($"{data[i].ReviewText}. ");
+                allReviewText.Append($"{data[i].ReviewText} ");
             }
 
             return allReviewText.ToString();
@@ -81,13 +81,13 @@ namespace AmazonReviewAutoGenerator.Business
 
             for (int i = 0; i < words.Length - 1; i++)
             {
-                if (_dictionary.ContainsKey(words[i]))
+                if (_dictionary.ContainsKey(words[i].Trim()))
                 {
-                    _dictionary[words[i]].Add(words[i + 1]);
+                    _dictionary[words[i].Trim()].Add(words[i + 1].Trim());
                 }
                 else
                 {
-                    _dictionary.Add(words[i], new List<string>() { words[i + 1] });
+                    _dictionary.Add(words[i].Trim(), new List<string>() { words[i + 1].Trim() });
                 }
             }
         }
