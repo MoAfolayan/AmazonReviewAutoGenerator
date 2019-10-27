@@ -12,6 +12,13 @@ namespace AmazonReviewAutoGenerator.Controllers
     [ApiController]
     public class GenerateController : ControllerBase
     {
+        IReviewService _reviewService;
+        
+        public GenerateController(IReviewService reviewService)
+        {
+            _reviewService = reviewService;
+        }
+
         [HttpGet]
         public ActionResult<ReviewToSend> Get()
         {
@@ -20,8 +27,8 @@ namespace AmazonReviewAutoGenerator.Controllers
             try
             {
                 ReviewToSend result = new ReviewToSend();
-                result.ReviewText = ReviewService.GenerateReview();
-                result.Rating = ReviewService.GenerateRating();
+                result.ReviewText = _reviewService.GenerateReview();
+                result.Rating = _reviewService.GenerateRating();
                 
                 response = Ok(result);
             }

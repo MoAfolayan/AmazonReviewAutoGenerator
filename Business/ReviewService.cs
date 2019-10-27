@@ -3,38 +3,40 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using System.Text;
-
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using AmazonReviewAutoGenerator.Models;
 
 namespace AmazonReviewAutoGenerator.Business
 {
-    public static class ReviewService
+    public class ReviewService : IReviewService
     {
-        private static Dictionary<string, List<string>> _dictionary;
-        private static int maxOutputLength;
+        private IConfiguration _configuration;
+        private Dictionary<string, List<string>> _dictionary;
+        private int _maxOutputLength;
         
-        static ReviewService() 
+        public ReviewService(IConfiguration configuration)
         {
+            _configuration = configuration;
             _dictionary = new Dictionary<string, List<string>>();
-        } 
+        }
 
-        public static void IngestAndTrainData(string filePath)
+        public void IngestAndTrainData(string filePath)
         {
             string data = IngestData(filePath);
             CreateDictionaryWithTrainedData(data);
         }
 
-        public static string GenerateReview()
+        public string GenerateReview()
         {
             Random rand = new Random();
             List<string> output = new List<string>();
             int index = rand.Next(_dictionary.Count);
             string prefix = _dictionary.Keys.Skip(index).Take(1).Single();
             output.Add(prefix);
-            int reviewTextLength = Convert.ToInt32(Constants.Configuration.GetSection("AppSettings:ReviewTextLength").Value);
+            int reviewTextLength = Convert.ToInt32(_configuration.GetSection("AppSettings:ReviewTextLength").Value);
             
-            if (reviewTextLength > maxOutputLength)
+            if (reviewTextLength > _maxOutputLength)
             {
                 throw new Exception("Review text output length too large");
             }
@@ -50,13 +52,13 @@ namespace AmazonReviewAutoGenerator.Business
             return string.Join(' ', output);
         }
 
-        public static string GenerateRating()
+        public string GenerateRating()
         {
             string rating = new Random().Next(1, 6).ToString();
             return string.Concat(rating, ".0");
         }
 
-        private static string IngestData(string filePath)
+        private string IngestData(string filePath)
         {
             string json = File.ReadAllText(filePath);
             string[] array = json.Split('\n');
@@ -74,10 +76,10 @@ namespace AmazonReviewAutoGenerator.Business
             return allReviewText.ToString();
         }
 
-        private static void CreateDictionaryWithTrainedData(string data)
+        private void CreateDictionaryWithTrainedData(string data)
         {
             string[] words = data.Split();
-            maxOutputLength = words.Length;
+            _maxOutputLength = words.Length;
 
             for (int i = 0; i < words.Length - 1; i++)
             {

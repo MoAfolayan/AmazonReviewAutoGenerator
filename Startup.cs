@@ -19,16 +19,6 @@ namespace AmazonReviewAutoGenerator
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            Constants.Configuration = configuration;
-
-            try
-            {
-                ReviewService.IngestAndTrainData(Constants.Configuration.GetSection("AppSettings:TrainingDataDirectory").Value);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
         }
 
         public IConfiguration Configuration { get; }
@@ -37,10 +27,12 @@ namespace AmazonReviewAutoGenerator
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddSingleton<IReviewService, ReviewService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IReviewService service)
         {
             if (env.IsDevelopment())
             {
@@ -54,6 +46,20 @@ namespace AmazonReviewAutoGenerator
 
             app.UseHttpsRedirection();
             app.UseMvc();
+
+            TrainData(service);
+        }
+
+        private void TrainData(IReviewService service)
+        {
+            try
+            {
+                service.IngestAndTrainData(Configuration.GetSection("AppSettings:TrainingDataDirectory").Value);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }
